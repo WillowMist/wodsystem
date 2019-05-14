@@ -1,15 +1,15 @@
 from evennia.utils import evmenu
 import wodsystem
 from evennia.utils.ansi import ANSIString
-from wodsystem import scripts
+from wodsystem import helper
 import itertools
 
 def menu_faction_choose(caller):
-    text = scripts.wod_header("Choose a Faction")
+    text = helper.wod_header("Choose a Faction")
     current_faction = caller.db.cg_info['Faction'] if 'Faction' in caller.db.cg_info.keys() else 'None'
     text += "\n" + ANSIString("|nYour current Faction is: |w%s" % current_faction).center(width=78, fillchar=" ")
-    text += "\n" + scripts.wod_header() + "\n\n Choose a faction:"
-    factions = scripts.get_template_options(caller, wodsystem.FACTIONS_LIST)
+    text += "\n" + helper.wod_header() + "\n\n Choose a faction:"
+    factions = helper.get_template_options(caller, wodsystem.FACTIONS_LIST)
     options = []
     if current_faction != 'None':
         options.append({"key": "None", "desc": "Do not change.", "goto": (_set_info, {"name": "Faction", "info": current_faction})})
@@ -33,7 +33,7 @@ def _set_info(caller, raw_string, **kwargs):
 
 def menu_set_pools(caller, raw_string, **kwargs):
     template = kwargs['template'] if 'template' in kwargs.keys() else None
-    race_template = scripts.get_template_options(caller, template)
+    race_template = helper.get_template_options(caller, template)
     headers = kwargs['template']['Headers'] if 'template' in kwargs.keys() else None
     caller.ndb._menutree.template = template
     caller.ndb._menutree.race_template = race_template
@@ -48,7 +48,7 @@ def menu_set_pools(caller, raw_string, **kwargs):
             for subkey in race_template[key]:
                 temp_data[subkey] = caller.ndb._menutree.base_stat
         caller.ndb._menutree.temp_data = temp_data
-        text = scripts.get_cg_data(scripts.get_race(caller), template, headers, temp_data)
+        text = helper.get_cg_data(helper.get_race(caller), template, headers, temp_data)
         keys = race_template.keys()
         for p in itertools.permutations(keys):
             option_list = {}
@@ -73,7 +73,7 @@ def menu_select_group(caller, raw_string, **kwargs):
         caller.ndb._menutree.option_list = kwargs['option_list']
     option_list = caller.ndb._menutree.option_list
     pointsleft = get_remaining_points(option_list)
-    text = scripts.get_cg_data(scripts.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data)
+    text = helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data)
     options = []
     for key_dict in option_list.keys():
         options.append({"desc": '%s (|y%s points to spend.|n)' % (key_dict, option_list[key_dict]['Points']), "goto": ("menu_select_stat", {'Group': key_dict})})
@@ -85,7 +85,7 @@ def menu_select_group(caller, raw_string, **kwargs):
 
 def menu_select_stat(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
-    text = str(scripts.get_cg_data(scripts.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_column=kwargs['Group']))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_column=kwargs['Group']))
     points = option_list[kwargs['Group']]['Points']
     pointsleft = get_remaining_points(option_list)
     text += '\n|y%d|n points left to spend in this group.' % points
@@ -99,7 +99,7 @@ def menu_select_stat(caller, raw_string, **kwargs):
 
 def menu_adjust_stat(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
-    text = str(scripts.get_cg_data(scripts.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_stat=kwargs['Stat']))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_stat=kwargs['Stat']))
     options = []
     pointsleft = get_remaining_points(option_list)
     stat = kwargs['Stat']
@@ -131,7 +131,7 @@ def _adjust_stat(caller, raw_string, **kwargs):
 def menu_confirm_accept(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
     pointsleft = get_remaining_points(option_list)
-    text = str(scripts.get_cg_data(scripts.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data))
     text += "\n\nAre you sure?  You still have |y%d|n points remaining to spend." % pointsleft
     options = []
     options.append({"key": ("yes", "y"), "goto": "menu_accept_stats"})

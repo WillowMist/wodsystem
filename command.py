@@ -3,7 +3,7 @@ from evennia.commands.default.system import CmdObjects
 from evennia import default_cmds, Command
 from evennia.utils import evmenu
 from wodsystem import menu
-from wodsystem import scripts
+from wodsystem import helper
 import wodsystem
 
 class MyCmdObjects(CmdObjects):
@@ -47,7 +47,7 @@ class CmdStats(Command):
         if not self.access(self.caller, 'others') and not target == self.caller:
             self.caller.msg("You can't view other player's sheets.")
             return
-        sheet = scripts.get_sheet(target)
+        sheet = helper.get_sheet(target)
         self.caller.msg(sheet)
 
 class CmdBackground(Command):
@@ -79,7 +79,7 @@ class CmdBackground(Command):
         if not self.access(self.caller, 'others') and not target == self.caller:
             self.caller.msg("You can't view other player's backgrounds.")
             return
-        bg = scripts.load_bg(target)
+        bg = helper.load_bg(target)
         self.caller.msg(bg)
 
 
@@ -117,7 +117,7 @@ class CmdChargen(Command):
         else:
             self.caller.ndb.cg_stage = 1
         if self.caller.ndb.cg_stage == 1:
-            scripts.background_edit(self.caller)
+            helper.background_edit(self.caller)
         if self.caller.ndb.cg_stage == 2:
             evmenu.EvMenu(self.caller, "wodsystem.menu", startnode="menu_faction_choose")
         if self.caller.ndb.cg_stage == 3:
