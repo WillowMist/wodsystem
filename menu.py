@@ -48,7 +48,7 @@ def menu_set_pools(caller, raw_string, **kwargs):
             for subkey in race_template[key]:
                 temp_data[subkey] = caller.ndb._menutree.base_stat
         caller.ndb._menutree.temp_data = temp_data
-        text = helper.get_cg_data(helper.get_race(caller), template, headers, temp_data)
+        text = helper.get_cg_data(helper.get_race(caller), template, headers, temp_data, show_zero=True)
         keys = race_template.keys()
         for p in itertools.permutations(keys):
             option_list = {}
@@ -73,7 +73,7 @@ def menu_select_group(caller, raw_string, **kwargs):
         caller.ndb._menutree.option_list = kwargs['option_list']
     option_list = caller.ndb._menutree.option_list
     pointsleft = get_remaining_points(option_list)
-    text = helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data)
+    text = helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, show_zero=True)
     options = []
     for key_dict in option_list.keys():
         options.append({"desc": '%s (|y%s points to spend.|n)' % (key_dict, option_list[key_dict]['Points']), "goto": ("menu_select_stat", {'Group': key_dict})})
@@ -85,7 +85,7 @@ def menu_select_group(caller, raw_string, **kwargs):
 
 def menu_select_stat(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
-    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_column=kwargs['Group']))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_column=kwargs['Group'], show_zero=True))
     points = option_list[kwargs['Group']]['Points']
     pointsleft = get_remaining_points(option_list)
     text += '\n|y%d|n points left to spend in this group.' % points
@@ -99,7 +99,7 @@ def menu_select_stat(caller, raw_string, **kwargs):
 
 def menu_adjust_stat(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
-    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_stat=kwargs['Stat']))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, highlight_stat=kwargs['Stat'], show_zero=True))
     options = []
     pointsleft = get_remaining_points(option_list)
     stat = kwargs['Stat']
@@ -131,7 +131,7 @@ def _adjust_stat(caller, raw_string, **kwargs):
 def menu_confirm_accept(caller, raw_string, **kwargs):
     option_list = caller.ndb._menutree.option_list
     pointsleft = get_remaining_points(option_list)
-    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data))
+    text = str(helper.get_cg_data(helper.get_race(caller), caller.ndb._menutree.template, caller.ndb._menutree.headers, caller.ndb._menutree.temp_data, show_zero=True))
     text += "\n\nAre you sure?  You still have |y%d|n points remaining to spend." % pointsleft
     options = []
     options.append({"key": ("yes", "y"), "goto": "menu_accept_stats"})

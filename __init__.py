@@ -48,3 +48,5 @@ MERIT_LIST = {
 FACTIONS_LIST = {
     'Default': ['None'],
 }
+
+SEARCHABLE_SECTIONS = ['cg_attributes', 'cg_skills', 'cg_advantages', 'cg_merits', 'cg_flaws']

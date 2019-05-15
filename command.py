@@ -1,6 +1,7 @@
 
 from evennia.commands.default.system import CmdObjects
 from evennia import default_cmds, Command
+from evennia.commands.default.muxcommand import MuxCommand
 from evennia.utils import evmenu
 from wodsystem import menu
 from wodsystem import helper
@@ -140,6 +141,54 @@ class CmdChargen(Command):
                                             "base_stat": 0}))
 
 
+class CmdStatReveal(MuxCommand):
+    '''
+    Reveal a stat value to the room (or, optionally, an individual).
+
+    Usage: +statreveal <stat>[=<target>]
+    '''
+    key = "+statreveal"
+    help_category = "wod"
+    locks = 'cmd:attr(cg_chargenfinished)'
+
+    def func(self):
+        target = None
+        if self.rhs:
+            target = self.caller.search(self.rhs)
+            if not target:
+                self.caller.msg("Could not find '%s', please try again" % self.rhs)
+                return
+        if not self.lhs:
+            self.caller.msg("What stat are you trying to show?")
+            return
+        else:
+            stat = helper.search_stat(self.caller, self.lhs)
+            if len(stat) == 0:
+                self.caller.msg("You don't seem to have that stat.")
+            elif len(stat) > 1:
+                self.caller.msg(helper.search_stat_disambiguation(stat))
+            else:
+                returnstring="|ySTATS|n: %s reveals their %s value: |y%d|n" % (self.caller.name, stat[0]['Stat'], stat[0]['Value'])
+                if target:
+                    returnstring += " (Privately sent to %s)" % target.name
+                    target.msg(returnstring)
+                    self.caller.msg(returnstring)
+                else:
+                    self.caller.location.msg_contents(returnstring)
+
+
+class CmdRoll(MuxCommand):
+    '''
+    Roll dice (add more here)
+    '''
+
+    key = '+roll'
+    help_category = "wod"
+    locks = 'cmd:attr(cg_chargenfinished)'
+
+    def func(self):
+        results = helper.wod_dice(10, 7)
+        self.caller.msg(results)
 """
 ----------------------------------------------------------------------------
 IN-GAME COMMANDS START HERE
@@ -169,3 +218,5 @@ class WodSystemCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdStats)
         self.add(CmdChargen)
         self.add(CmdBackground)
+        self.add(CmdStatReveal)
+        self.add(CmdRoll)

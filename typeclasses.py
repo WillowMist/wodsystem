@@ -27,7 +27,8 @@ class WodEventCharacter(EventCharacter):
         self.db.cg_merits = {}
         self.db.cg_flaws = {}
         self.db.cg_pools = {}
-        self.db.cg_info = {'Race': 'Human'}
+        self.db.cg_advantages = {}
+        self.db.cg_info = {'Race': 'Mortal'}
         self.db.cg_creationpools = {'Attributes': (5,4,3), 'Skills': (11,7,4), 'Specialties': 3, 'Merits': 7}
         self.db.cg_chargenfinished = False
     pass
