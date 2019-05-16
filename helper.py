@@ -1,3 +1,4 @@
+import re
 import wodsystem
 from evennia.utils import evtable, pad, fill, eveditor, evmenu
 from evennia.utils.utils import justify
@@ -26,6 +27,7 @@ def wod_header(title=None, align="l"):
         line = '|M%s|n' % pad('', width=78, fillchar='=')
     return line
 
+
 def get_sheet(target):
     '''
     Returns the character sheet for target.
@@ -45,6 +47,7 @@ def get_sheet(target):
     return_table += str(get_cg_data(cg_race, wodsystem.SKILL_LIST, ['Physical', 'Social', 'Mental'], target.db.cg_skills, useheaders=False))
     return return_table
 
+
 def get_race(target):
     '''
 
@@ -56,6 +59,7 @@ def get_race(target):
     else:
         cg_race = 'Default'
     return cg_race
+
 
 def get_template_options(target, template):
     cg_race = get_race(target)
@@ -87,6 +91,7 @@ def get_cg_data(race, template, headers, data, useheaders=True, highlight_column
         table = evtable.EvTable(table=columns, borders="tablecols")
     table.reformat(width=78)
     return table
+
 
 def get_cg_info(race, template, data, target):
     if race in template.keys():
@@ -125,6 +130,7 @@ def background_edit(caller):
     """)
     eveditor.EvEditor(caller, loadfunc=load_bg, savefunc=save_bg, quitfunc=quit_bg, key='Background Editor')
 
+
 def load_bg(caller):
     "Get the current value"
     if 'Background' in caller.db.cg_info.keys():
@@ -132,10 +138,12 @@ def load_bg(caller):
     else:
         return ''
 
+
 def save_bg(caller, buffer):
     "Set the background information"
     caller.db.cg_info['Background'] = buffer
     caller.msg("Background saved")
+
 
 def quit_bg(caller):
     caller.msg("Exiting Background Editor")
@@ -143,6 +151,7 @@ def quit_bg(caller):
         caller.ndb.cg_stage += 1
         sleep(1)
         caller.execute_cmd('+charactergen')
+
 
 def search_stat(caller, statstring):
     results = []
@@ -154,6 +163,7 @@ def search_stat(caller, statstring):
             results.append({'Stat': stat, 'Value': tempdict[stat]})
     return results
 
+
 def get_stat(caller, stat):
     stats = search_stat(caller, stat)
     if len(results) == 0:
@@ -162,6 +172,7 @@ def get_stat(caller, stat):
         return -1
     else:
         return stats[0]['Value']
+
 
 def search_stat_disambiguation(statlist):
     commastring = ""
@@ -174,6 +185,7 @@ def search_stat_disambiguation(statlist):
         commastring += '|y%s|n' % sortedlist[x]['Stat']
     returnstring = "Did you mean %s?" % commastring
     return returnstring
+
 
 def wod_dice(dice, difficulty=5):
     results = {'Dice': dice,
@@ -191,3 +203,54 @@ def wod_dice(dice, difficulty=5):
                 dice -= 1
         results['Results'].append(dielist)
     return results
+
+def parse_dicestring(caller, dicestring):
+    RE_PARTS = re.compile(r"(\+|-)")
+    MODS = ["+", "-"]
+    parts = [part.strip() for part in RE_PARTS.split(dicestring) if part]
+    dice = 0
+    dicestring = ""
+    cur_mod = '+'
+    for part in parts:
+        if part.isdigit():
+            part = int(part)
+            dicestring += " %d" % part
+        elif part in MODS:
+            cur_mod = part
+            dicestring += " %s" % cur_mod
+            part = 0
+        else:
+            tempstat = search_stat(caller, part)
+            if len(tempstat) == 0:
+                return False, "'%s' not found." % part, None
+            if len(tempstat) > 1:
+                return False, "'%s' has too many matches.  %s" % (part, search_stat_disambiguation(tempstat)), None
+            else:
+                part = int(tempstat[0]['Value'])
+                dicestring += " |y%s|n" % tempstat[0]['Stat']
+        if cur_mod == "-":
+            dice -= part
+        elif cur_mod == "+":
+            dice += part
+        else:
+            return False, "Something went wrong.",
+    return True, dice, dicestring.strip()
+
+def parse_dicestring_rhs(caller, rhsstring):
+    RE_PARTS = re.compile(r"(/)")
+    parts = [part.strip() for part in RE_PARTS.split(rhsstring) if part]
+    target = None
+    difficulty = None
+    for part in parts:
+        if part.isdigit():
+            difficulty = int(part)
+        elif part == "/":
+            pass
+        else:
+            temptarget = caller.search(part)
+            if temptarget:
+                target = temptarget
+            else:
+                msg = "Could not find '%s'" % part
+                return False, target, difficulty, msg
+    return True, target, difficulty, None

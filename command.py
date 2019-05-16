@@ -187,8 +187,32 @@ class CmdRoll(MuxCommand):
     locks = 'cmd:attr(cg_chargenfinished)'
 
     def func(self):
-        results = helper.wod_dice(10, 7)
-        self.caller.msg(results)
+        # results = helper.wod_dice(10, 7)
+        success, dice, dicestring = helper.parse_dicestring(self.caller, self.lhs)
+        if success:
+            self.caller.msg('Dice: %s' % dice)
+            self.caller.msg('String: %s' % dicestring)
+            difficulty = None
+            target = None
+            if self.rhs:
+                success, target, difficulty, msg = helper.parse_dicestring_rhs(self.caller, self.rhs)
+                if success:
+                    self.caller.msg('Target: %s' % target)
+                    self.caller.msg('Difficulty: %s' % difficulty)
+                else:
+                    self.caller.msg('Target Error: %s' % msg)
+                    self.caller.msg('Difficulty: %s' % difficulty)
+            if dice:
+                if difficulty:
+                    dice_result = helper.wod_dice(dice, difficulty)
+                else:
+                    dice_result = helper.wod_dice(dice)
+                dice_result_string = '|yDICE|n: %s rolled %s (%d), difficulty %d. \nSuccesses: |y%d|n \nDice Results: %s' % (self.caller.name, dicestring, dice, dice_result['Difficulty'], dice_result['Successes'], dice_result['Results'])
+                self.caller.msg(dice_result_string)
+        else:
+            self.caller.msg(dice)
+
+
 """
 ----------------------------------------------------------------------------
 IN-GAME COMMANDS START HERE
