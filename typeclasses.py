@@ -1,5 +1,6 @@
 from evennia import DefaultCharacter, DefaultRoom, DefaultExit, DefaultObject
 from evennia.contrib.ingame_python.typeclasses import EventCharacter, EventRoom, EventExit, EventObject
+from wodsystem import helper
 
 class WodEventCharacter(EventCharacter):
     """
@@ -22,16 +23,24 @@ class WodEventCharacter(EventCharacter):
 
     """
     def at_object_creation(self):
-        self.db.cg_attributes = {}
-        self.db.cg_skills = {}
-        self.db.cg_merits = {}
-        self.db.cg_flaws = {}
-        self.db.cg_pools = {}
-        self.db.cg_advantages = {}
-        self.db.cg_info = {'Race': 'Mortal'}
-        self.db.cg_creationpools = {'Attributes': (5,4,3), 'Skills': (11,7,4), 'Specialties': 3, 'Merits': 7}
-        self.db.cg_chargenfinished = False
-    pass
+        # self.db.cg_attributes = {}
+        # self.db.cg_skills = {}
+        # self.db.cg_skill_specialties = []
+        # self.db.cg_merits = {}
+        # self.db.cg_flaws = {}
+        # self.db.cg_pools = {}
+        # self.db.cg_advantages = {'Size': 5}
+        # self.db.cg_info = {'Race': 'Mortal'}
+        # self.db.cg_creationpools = {'Attributes': (5,4,3), 'Skills': (11,7,4), 'Specialties': 3, 'Merits': 7}
+        # self.db.cg_chargenfinished = False
+        self.ndb.race = 'Mortal'
+        helper.init_object(self)
+
+
+class WodEventVampire(WodEventCharacter):
+    def at_object_creation(self):
+        self.ndb.race = 'Vampire'
+        helper.init_object(self)
 
 class WodEventRoom(EventRoom):
     """

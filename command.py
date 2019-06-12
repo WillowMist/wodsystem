@@ -31,7 +31,7 @@ class CmdStats(Command):
     """
 
     key = "+stats"
-    help_category = "wod"
+    help_category = "World of Darkness"
     locks = "cmd:all();others:perm(Helper) or perm(cg_view_others)"
 
 
@@ -63,7 +63,7 @@ class CmdBackground(Command):
     """
 
     key = "+background"
-    help_category = "wod"
+    help_category = "World of Darkness"
     locks = "cmd:all();others:perm(Helper) or perm(cg_view_others)"
 
 
@@ -106,39 +106,40 @@ class CmdChargen(Command):
 
     key = "+chargen"
     aliases = ["+cg", "+charactergen"]
-    help_category = "wod"
+    help_category = "World of Darkness"
     locks = 'cmd:NOT attr(cg_chargenfinished)'
 
     def func(self):
         """
         Start the process
         """
-        if self.caller.ndb.cg_stage:
-            pass
-        else:
-            self.caller.ndb.cg_stage = 1
-        if self.caller.ndb.cg_stage == 1:
-            helper.background_edit(self.caller)
-        if self.caller.ndb.cg_stage == 2:
-            evmenu.EvMenu(self.caller, "wodsystem.menu", startnode="menu_faction_choose")
-        if self.caller.ndb.cg_stage == 3:
-            evmenu.EvMenu(self.caller,
-                          "wodsystem.menu",
-                          startnode="menu_set_pools",
-                          startnode_input=("",
-                                           {"template": wodsystem.ATTRIBUTE_LIST,
-                                            "pools": self.caller.db.cg_creationpools['Attributes'],
-                                            "current_data": 'cg_attributes',
-                                            "base_stat": 1}))
-        if self.caller.ndb.cg_stage == 4:
-            evmenu.EvMenu(self.caller,
-                          "wodsystem.menu",
-                          startnode="menu_set_pools",
-                          startnode_input=("",
-                                           {"template": wodsystem.SKILL_LIST,
-                                            "pools": self.caller.db.cg_creationpools['Skills'],
-                                            "current_data": 'cg_skills',
-                                            "base_stat": 0}))
+        evmenu.EvMenu(self.caller, "wodsystem.menu", startnode="menu_chargen", cmd_on_exit=None)
+        # if self.caller.ndb.cg_stage:
+        #     pass
+        # else:
+        #     self.caller.ndb.cg_stage = 1
+        # if self.caller.ndb.cg_stage == 1:
+        #     helper.background_edit(self.caller)
+        # if self.caller.ndb.cg_stage == 2:
+        #     evmenu.EvMenu(self.caller, "wodsystem.menu", startnode="menu_faction_choose")
+        # if self.caller.ndb.cg_stage == 3:
+        #     evmenu.EvMenu(self.caller,
+        #                   "wodsystem.menu",
+        #                   startnode="menu_set_pools",
+        #                   startnode_input=("",
+        #                                    {"template": wodsystem.ATTRIBUTE_LIST,
+        #                                     "pools": self.caller.db.cg_creationpools['Attributes'],
+        #                                     "current_data": 'cg_attributes',
+        #                                     "base_stat": 1}))
+        # if self.caller.ndb.cg_stage == 4:
+        #     evmenu.EvMenu(self.caller,
+        #                   "wodsystem.menu",
+        #                   startnode="menu_set_pools",
+        #                   startnode_input=("",
+        #                                    {"template": wodsystem.SKILL_LIST,
+        #                                     "pools": self.caller.db.cg_creationpools['Skills'],
+        #                                     "current_data": 'cg_skills',
+        #                                     "base_stat": 0}))
 
 
 class CmdStatReveal(MuxCommand):
@@ -148,7 +149,7 @@ class CmdStatReveal(MuxCommand):
     Usage: +statreveal <stat>[=<target>]
     '''
     key = "+statreveal"
-    help_category = "wod"
+    help_category = "World of Darkness"
     locks = 'cmd:attr(cg_chargenfinished)'
 
     def func(self):
@@ -179,36 +180,71 @@ class CmdStatReveal(MuxCommand):
 
 class CmdRoll(MuxCommand):
     '''
-    Roll dice (add more here)
+    Roll a dice pool against a target difficulty, either privately or to the room.
+
+    Usage:  +roll <dice string> [=[<difficulty>][/<target>]]
+
+    Dice string can be a single number, a stat (like Strength or Intelligence) or
+    a simple addition/subtraction math equation (Strength + Dexterity + 2) or
+    (Intelligence + Wits - 1)
+
+    Difficulty is a target number (integer) that you must roll for a die to count
+    as a "Success".
+    Target is used if you want to privately send the results to  a player.  'me'
+    works here too.
+
+    While you may roll X dice, the system may add to those dice.  Every time you
+    roll one or more 10, the system will reroll that many dice, adding successes,
+    and rerolling 10s again.
+
+    Results will be sent to the whole room, or <target>, if specified.
     '''
 
     key = '+roll'
-    help_category = "wod"
+    help_category = "World of Darkness"
     locks = 'cmd:attr(cg_chargenfinished)'
 
     def func(self):
         # results = helper.wod_dice(10, 7)
         success, dice, dicestring = helper.parse_dicestring(self.caller, self.lhs)
         if success:
-            self.caller.msg('Dice: %s' % dice)
-            self.caller.msg('String: %s' % dicestring)
+            # self.caller.msg('Dice: %s' % dice)
+            # self.caller.msg('String: %s' % dicestring)
             difficulty = None
             target = None
             if self.rhs:
                 success, target, difficulty, msg = helper.parse_dicestring_rhs(self.caller, self.rhs)
-                if success:
-                    self.caller.msg('Target: %s' % target)
-                    self.caller.msg('Difficulty: %s' % difficulty)
-                else:
-                    self.caller.msg('Target Error: %s' % msg)
-                    self.caller.msg('Difficulty: %s' % difficulty)
+                # if success:
+                #    self.caller.msg('Target: %s' % target)
+                #    self.caller.msg('Difficulty: %s' % difficulty)
+                # else:
+                #    self.caller.msg('Target Error: %s' % msg)
+                #    self.caller.msg('Difficulty: %s' % difficulty)
             if dice:
                 if difficulty:
                     dice_result = helper.wod_dice(dice, difficulty)
                 else:
                     dice_result = helper.wod_dice(dice)
-                dice_result_string = '|yDICE|n: %s rolled %s (%d), difficulty %d. \nSuccesses: |y%d|n \nDice Results: %s' % (self.caller.name, dicestring, dice, dice_result['Difficulty'], dice_result['Successes'], dice_result['Results'])
-                self.caller.msg(dice_result_string)
+                dice_result_string = '|yDICE|n: %s rolled %s (%d), difficulty %d. \n|yDICE|n: Successes: |y%d|n' % (self.caller.name, dicestring, dice, dice_result['Difficulty'], dice_result['Successes'])
+                for resultset in dice_result['Results']:
+                    resultlist = []
+                    for die in sorted(resultset):
+                        diestring = str(die)
+                        if die < dice_result['Difficulty']:
+                            diestring = '|R%s|n' % diestring
+                        elif die == 10:
+                            diestring = '|y%s|n' % diestring
+                        else:
+                            diestring = '|Y%s|n' % diestring
+                        resultlist.append(diestring)
+                    dice_result_string += '\n|yDICE|n: Roll Result: %s' % resultlist
+                if target:
+                    msg = '%s \n|yDICE|n: Sent privately to %s' % (dice_result_string, target.name)
+                    messagelist = list(dict.fromkeys([self.caller, target]))
+                    for temptarg in messagelist:
+                        temptarg.msg(msg)
+                else:
+                    self.caller.location.msg_contents(dice_result_string)
         else:
             self.caller.msg(dice)
 
