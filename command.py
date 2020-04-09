@@ -51,6 +51,12 @@ class CmdStats(Command):
         sheet = helper.get_sheet(target)
         self.caller.msg(sheet)
 
+
+class CmdRaces(Command):
+    key = "+races"
+    def func(self):
+        self.caller.msg(wodsystem.RACE_LIST)
+
 class CmdBackground(Command):
     """
     View your background.
@@ -280,3 +286,4 @@ class WodSystemCmdSet(default_cmds.CharacterCmdSet):
         self.add(CmdBackground)
         self.add(CmdStatReveal)
         self.add(CmdRoll)
+        self.add(CmdRaces)

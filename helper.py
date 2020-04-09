@@ -9,40 +9,44 @@ from evennia.contrib.dice import roll_dice
 def init_object(obj):
     size = obj.ndb.size if obj.nattributes.has('size') else 5
     race = obj.ndb.race if obj.nattributes.has('race') else 'Mortal'
-    if not obj.attributes.has('cg_info') or not len(obj.db.cg_info) or obj.db.cg_info['Race'] != race: obj.db.cg_info = {'Race': race, 'Size': size}
-    if not obj.attributes.has('cg_attributes') or not len(obj.db.cg_attributes):
+    reset = False
+    if not obj.attributes.has('cg_info') or not len(obj.db.cg_info) or obj.db.cg_info['Race'] != race:
+        obj.db.cg_info = {'Race': race, 'Size': size}
+        reset = True
+    if not obj.attributes.has('cg_attributes') or not len(obj.db.cg_attributes) or reset:
         obj.db.cg_attributes = get_base_stats(obj, wodsystem.ATTRIBUTE_LIST, base_stat=1)
-    if not obj.attributes.has('cg_skills') or not len(obj.db.cg_skills):
+    if not obj.attributes.has('cg_skills') or not len(obj.db.cg_skills) or reset:
         obj.db.cg_skills = get_base_stats(obj, wodsystem.SKILL_LIST)
-    if not obj.attributes.has('cg_skill_specialties') or not len(obj.db.cg_skill_specialties): obj.db.cg_skill_specialties = []
-    if not obj.attributes.has('cg_merits') or not len(obj.db.cg_merits):
+    if not obj.attributes.has('cg_skill_specialties') or not len(obj.db.cg_skill_specialties) or reset: obj.db.cg_skill_specialties = []
+    if not obj.attributes.has('cg_merits') or not len(obj.db.cg_merits) or reset:
         obj.db.cg_merits = get_base_stats(obj, wodsystem.MERIT_LIST)
-    if not obj.attributes.has('cg_flaws') or not len(obj.db.cg_flaws): obj.db.cg_flaws = {}
-    if not obj.attributes.has('cg_pools') or not len(obj.db.cg_pools): obj.db.cg_pools = {}
-    if not obj.attributes.has('cg_advantages') or not len(obj.db.cg_advantages): obj.db.cg_advantages = {}
-    if not obj.attributes.has('cg_creationpools') or not len(obj.db.cg_creationpools): obj.db.cg_creationpools = {'Attributes': (5, 4, 3), 'Skills': (11, 7, 4), 'Specialties': 3, 'Merits': 7}
-    if not obj.attributes.has('cg_chargenfinished'): obj.db.cg_chargenfinished = False
+    if not obj.attributes.has('cg_flaws') or not len(obj.db.cg_flaws) or reset: obj.db.cg_flaws = {}
+    if not obj.attributes.has('cg_pools') or not len(obj.db.cg_pools) or reset: obj.db.cg_pools = {}
+    if not obj.attributes.has('cg_advantages') or not len(obj.db.cg_advantages) or reset: obj.db.cg_advantages = {}
+    if not obj.attributes.has('cg_creationpools') or not len(obj.db.cg_creationpools) or reset: obj.db.cg_creationpools = {'Attributes': (5, 4, 3), 'Skills': (11, 7, 4), 'Specialties': 3, 'Merits': 7}
+    if not obj.attributes.has('cg_chargenfinished') or reset: obj.db.cg_chargenfinished = False
 
 
-def wod_header(title=None, align="l"):
+def wod_header(title=None, align="l", linecolor="W", textcolor="w", accentcolor="w"):
     '''
-    Shows a 78 character wide magenta header.  Optional header imbedded in it.
+    Shows a 78 character wide header.  Optional header imbedded in it.
 
     :param title: String that will be shown in white over the header, optional.
     :param align: "l", "c", or "r" alignment.  Only used if title is provided.
+    :param linecolor: Single character color code, default is 'W' (Light grey)
+    :param textcolor: Single character color code, default is 'w' (White)
     '''
     if title:
-        fulltitle = "|M===|w|||n %s |w|||M===" % title
+        fulltitle = "|%s===|%s|||%s %s |%s|||%s===" % (linecolor, accentcolor, textcolor, title, accentcolor, linecolor)
         w = len(strip_ansi(fulltitle))
-        # line = '|M%s|n' % pad(fulltitle, width=90, align=align, fillchar="=")
         if align == "r":
-            line = '|M%s|n' % ANSIString(fulltitle).rjust(width=78, fillchar="=")
+            line = '|%s%s|n' % (linecolor, ANSIString(fulltitle).rjust(width=78, fillchar="="))
         elif align == "c":
-            line = '|M%s|n' % ANSIString(fulltitle).center(width=78, fillchar="=")
+            line = '|%s%s|n' % (linecolor, ANSIString(fulltitle).center(width=78, fillchar="="))
         else:
-            line = '|M%s|n' % ANSIString(fulltitle).ljust(width=78, fillchar="=")
+            line = '|%s%s|n' % (linecolor, ANSIString(fulltitle).ljust(width=78, fillchar="="))
     else:
-        line = '|M%s|n' % pad('', width=78, fillchar='=')
+        line = '|%s%s|n' % (linecolor, pad('', width=78, fillchar='='))
     return line
 
 
@@ -68,7 +72,7 @@ def get_sheet(target):
         cg_race = target.db.cg_info['Race']
     else:
         cg_race = 'Default'
-    return_table = wod_header("Character Sheet: %s" % target.name, align="r")
+    return_table = wod_header("Character Sheet: %s" % target.name, align="r", linecolor="M", accentcolor="w", textcolor="y")
     return_table += '\n'
     return_table += str(get_cg_info(cg_race, wodsystem.INFO_LIST,target.db.cg_info, target))
     return_table += '\n'
@@ -429,7 +433,7 @@ def merit_check_prereqs(character, merit):
             else:
                 tempstring += '|r%s (%s)|n' % (stat, reqgroup[stat])
         reqstring += tempstring
-    return tempstring
+    return reqstring
 
 
 def calculate_advantages(caller):

@@ -46,7 +46,7 @@ def set_temp(caller, clear=False, **kwargs):
             caller.ndb._menutree.base_stat = kwargs['base_stat']
         if 'option_list' in list(kwargs.keys()):
             caller.ndb._menutree.option_list = kwargs['option_list']
-        if not caller.nattributes.has('_menutree.temp_data') and 'temp_data' in list(kwargs.keys()):
+        if not hasattr(caller.ndb._menutree,'temp_data') and 'temp_data' in list(kwargs.keys()):
             caller.ndb._menutree.temp_data = kwargs['temp_data']
 
 
@@ -54,6 +54,7 @@ def menu_chargen(caller):
     text = "Choose an option"
     options = []
     set_temp(caller, clear=True)
+    options.append({"desc": "Edit Race (Currently: |y%s|n) (|RNOTE|n: Set this first.  Changing it will reset your character.)" % (caller.db.cg_info['Race'] if 'Race' in list(caller.db.cg_info.keys()) else 'None'), "goto": "menu_race_choose"})
     options.append({"desc": "Edit Background (Current size: |y%s|n characters)" % len(helper.load_bg(caller)), "goto": "chargen_background"})
     options.append({"desc": "Edit Faction (Currently: |y%s|n)" % (caller.db.cg_info['Faction'] if 'Faction' in list(caller.db.cg_info.keys()) else 'None'), "goto": "menu_faction_choose"})
     attr_points = helper.get_cg_points_spent(caller.db.cg_attributes, base_stat=1)
@@ -114,6 +115,27 @@ def menu_faction_choose(caller):
     return text, options
 
 
+def menu_race_choose(caller):
+    text = helper.wod_header("Choose a Race")
+    current_race = caller.db.cg_info['Race'] if 'Race' in list(caller.db.cg_info.keys()) else 'Mortal'
+    text += "\n" + ANSIString("|nYour current Race is: |w%s" % current_race).center(width=78, fillchar=" ")
+    text += "\n" + helper.wod_header() + "\n\n Choose a race:"
+    races = wodsystem.RACE_LIST
+    options = []
+    if current_race != 'None':
+        options.append({"key": "None", "desc": "Do not change.", "goto": (_set_race, {"name": "Race", "info": current_race})})
+    for race in races:
+        options.append(
+            {"key": race, "desc": "Set to '%s'." % race, "goto": (_set_race, {"name": "Race", "info": race})}
+        )
+    if not caller.db.cg_chargenfinished:
+        options.append(
+            {"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Return to Chargen Main Menu", "goto": "menu_chargen"})
+    else:
+        options.append({"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Exit the Menu", "goto": "menu_exit_chargen"})
+    return text, options
+
+
 def chargen_background(caller, rawstring, **kwargs):
     helper.background_edit(caller)
     return
@@ -124,10 +146,25 @@ def _set_info(caller, raw_string, **kwargs):
     caller.db.cg_info[attribute] = value
     return ''
 
+
+def _set_race(caller, raw_string, **kwargs):
+    race = kwargs.get("info", None)
+    if race:
+        caller.ndb.race = race
+        helper.init_object(caller)
+    return ''
+
+
 def menu_set_merits(caller, raw_string, **kwargs):
     set_temp(caller, **kwargs)
     mt = caller.ndb._menutree
-    maxpoints = kwargs['pools'] if 'pools' in list(kwargs.keys()) else 0
+    if 'pools' in list(kwargs.keys()):
+        maxpoints = kwargs['pools']
+    else:
+        if hasattr(caller.ndb._menutree,'option_list'):
+            maxpoints = mt.option_list['Merits']['MaxPoints']
+        else:
+            maxpoints = 0
     points_left = maxpoints - helper.get_cg_points_spent(caller.db.cg_merits)
     set_temp(caller, option_list={'Merits': {'Points': points_left, 'MaxPoints': maxpoints}})
     options = []
@@ -275,7 +312,6 @@ def menu_adjust_merit(caller, raw_string, **kwargs):
     pointsleft = get_remaining_points(mt.option_list)
     stat = kwargs['Stat']
     merit = helper.parse_merit(mt.race_template[kwargs['Group']][kwargs['Stat']])
-    caller.msg(merit)
     points = mt.option_list['Merits']['Points']
     text += '\nEffect: %s' % merit['Effect']
     if merit['Prereqs']:
@@ -284,9 +320,22 @@ def menu_adjust_merit(caller, raw_string, **kwargs):
     maxpoints = mt.option_list['Merits']['MaxPoints']
     if helper.merit_can_buy(caller, merit, pointsleft):
         if merit['Multibuy']:
-            opions.append({"key": ("+"), "desc": "Purchase this merit", "goto": ("menu_merit_subcategory", {'Stat': stat, 'Group': kwargs['Group']})})
+            options.append({"key": ("+"), "desc": "Purchase this merit", "goto": ("menu_merit_subcategory", {'Stat': stat, 'Group': kwargs['Group']})})
         else:
-            pass # Need code for buying merits, and listing existing merits to sell back
+            if stat in list(mt.temp_data[kwargs['Group']].keys()):
+                pass
+            else:
+                if len(merit['Cost']) == 1:
+                    level = merit['Cost'][0]
+                    cost = level
+                    if cost > 4:
+                        cost = cost + (cost - 4)
+                    options.append({"key": ("+"), "desc": "Purchase this merit",
+                                    "goto": ("_buy_merit", {'Stat': stat, 'Group': kwargs['Group'], 'Level': level, 'Cost': cost})})
+                options.append({"key": ("+"), "desc": "Purchase this merit", "goto": ("menu_merit_select_cost",{'Stat': stat, 'Group': kwargs['Group']})})
+        if stat in list(mt.temp_data[kwargs['Group']].keys()):
+            pass
+            # sell back merits
     options.append({"key": ("<", "back", "exit"), "desc": "Go back to Stat Selection", "goto": ("menu_select_merit", {'Stat': stat, 'Group': kwargs['Group']})})
     if not pointsleft:
         options.append({"key": (">", "accept", "continue"), "desc": "Accept these stats.", "goto": "menu_accept_stats"})

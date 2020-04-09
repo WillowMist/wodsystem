@@ -23,7 +23,7 @@ SKILL_LIST = {
     }
 }
 
-RACE_LIST = ['Mortal', 'Mortal+', 'Vampire', 'Werewolf', 'Mage', 'Changeling']
+RACE_LIST = ['Mortal', 'Mortal+']
 
 VIRTUE_LIST = ['Charity', 'Faith', 'Fortitude', 'Hope', 'Justice', 'Prudence', 'Temperance']
 
