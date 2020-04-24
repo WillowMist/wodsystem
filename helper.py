@@ -438,10 +438,11 @@ def merit_check_prereqs(character, merit):
 
 def calculate_advantages(caller):
     attributes = caller.db.cg_attributes
+    reflexes = caller.db.cg_merits['Physical']['Fast Reflexes'] if 'Fast Reflexes' in caller.db.cg_merits['Physical'].keys() else 0
     health = attributes['Physical']['Stamina'] + caller.db.cg_info['Size']
     willpower = attributes['Mental']['Resolve'] + attributes['Social']['Composure']
     defense = min([attributes['Physical']['Dexterity'], attributes['Mental']['Wits']])
-    initiative = attributes['Physical']['Dexterity'] + attributes['Social']['Composure']
+    initiative = attributes['Physical']['Dexterity'] + attributes['Social']['Composure'] + reflexes
     speed = attributes['Physical']['Strength'] + attributes['Physical']['Dexterity'] + 5
     return_dict = {'Health': health, 'Willpower': willpower, 'Defense': defense, 'Initiative': initiative, 'Speed': speed}
     return return_dict

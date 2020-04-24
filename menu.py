@@ -4,6 +4,7 @@ from evennia.utils.ansi import ANSIString
 from evennia.utils import eveditor
 from wodsystem import helper
 import itertools
+from evennia import logger
 
 def set_temp(caller, clear=False, **kwargs):
     if clear:
@@ -144,6 +145,7 @@ def _set_info(caller, raw_string, **kwargs):
     attribute = kwargs.get("name", "Error")
     value = kwargs.get("info", "Error")
     caller.db.cg_info[attribute] = value
+    logger.log_file('%s set %s to %s' % (caller.name, attribute, value))
     return ''
 
 
@@ -263,6 +265,8 @@ def menu_select_stat(caller, raw_string, **kwargs):
 
 def menu_select_merit(caller, raw_string, **kwargs):
     mt = caller.ndb._menutree
+    if 'Merits' in mt.temp_data.keys():
+        mt.option_list['Merits']['Points'] = mt.option_list['Merits']['MaxPoints'] - helper.get_cg_points_spent(mt.temp_data['Merits'])
     points = mt.option_list['Merits']['Points']
     pointsleft = get_remaining_points(mt.option_list)
     text = str(helper.get_cg_data(mt.template, mt.headers, mt.temp_data, highlight_column=kwargs['Group'], for_purchase=True, datatype='merits', caller=caller, points_left=pointsleft))
@@ -319,32 +323,133 @@ def menu_adjust_merit(caller, raw_string, **kwargs):
     text += '\n|y%d|n points left to spend in this group.' % points
     maxpoints = mt.option_list['Merits']['MaxPoints']
     if helper.merit_can_buy(caller, merit, pointsleft):
-        if merit['Multibuy']:
-            options.append({"key": ("+"), "desc": "Purchase this merit", "goto": ("menu_merit_subcategory", {'Stat': stat, 'Group': kwargs['Group']})})
-        else:
-            if stat in list(mt.temp_data[kwargs['Group']].keys()):
-                pass
+        if not stat in list(mt.temp_data[kwargs['Group']].keys()) or merit['Multibuy']:
+
+            if len(merit['Cost']) == 1:
+                level = merit['Cost'][0]
+                cost = level
+                if cost > 4:
+                    cost = cost + (cost - 4)
+                if merit['Multibuy']:
+                    options.append({"key": ("+"), "desc": "Purchase this merit", "goto": (
+                    "menu_merit_subcategory", {'Stat': stat, 'Group': kwargs['Group'], 'Category': None, 'Cost': cost, 'Level': level})})
+                else:
+                    options.append({"key": ("+"), "desc": "Purchase this merit",
+                                "goto": (_buy_merit, {'Stat': stat, 'Group': kwargs['Group'], 'Level': level, 'Cost': cost})})
             else:
-                if len(merit['Cost']) == 1:
-                    level = merit['Cost'][0]
+                for level in merit['Cost']:
                     cost = level
                     if cost > 4:
                         cost = cost + (cost - 4)
-                    options.append({"key": ("+"), "desc": "Purchase this merit",
-                                    "goto": ("_buy_merit", {'Stat': stat, 'Group': kwargs['Group'], 'Level': level, 'Cost': cost})})
-                options.append({"key": ("+"), "desc": "Purchase this merit", "goto": ("menu_merit_select_cost",{'Stat': stat, 'Group': kwargs['Group']})})
-        if stat in list(mt.temp_data[kwargs['Group']].keys()):
-            pass
-            # sell back merits
+                    if cost <= mt.option_list['Merits']['Points']:
+                        if merit['Multibuy']:
+                            options.append({"key": ('%s' % level), "desc": "Purchase this merit at %s dots." % level, "goto": ("menu_merit_subcategory", {'Level': level, 'Stat': stat, 'Group': kwargs['Group'], 'Category': None, 'Cost': cost})})
+                        else:
+                            options.append({"key": ('%s' % level), "desc": "Purchase this merit at %s dots" % level, "goto": (_buy_merit, {'Level': level, 'Stat': stat, 'Group': kwargs['Group'], 'Cost': cost})})
+    if stat in list(mt.temp_data[kwargs['Group']].keys()):
+        playerstat = mt.temp_data[kwargs['Group']][stat]
+        if str(playerstat).isdigit():
+            cost = playerstat
+            if cost > 4:
+                cost = cost + (cost - 4)
+            options.append({"key": ("-"), "desc": "Sell this merit back for %s points" % cost, "goto": (_sell_merit, {'Level': playerstat, 'Stat': stat, 'Group': kwargs['Group'], 'Cost': cost})})
+        else:
+            for substat in playerstat.keys():
+                level = playerstat[substat]
+                cost = level
+                if cost > 4:
+                    cost = cost + (cost - 4)
+                options.append({"key": ("%s" % substat), "desc": "Sell this merit back for %s points" % cost, "goto": (_sell_merit, {'Level': level, 'CustomCat': substat, 'Stat': stat, 'Group': kwargs['Group'], 'Cost': cost})})
     options.append({"key": ("<", "back", "exit"), "desc": "Go back to Stat Selection", "goto": ("menu_select_merit", {'Stat': stat, 'Group': kwargs['Group']})})
     if not pointsleft:
         options.append({"key": (">", "accept", "continue"), "desc": "Accept these stats.", "goto": "menu_accept_stats"})
     return text, options
 
+
+def menu_merit_subcategory(caller, raw_string, **kwargs):
+    mt = caller.ndb._menutree
+    text = ''
+    merit = helper.parse_merit(mt.race_template[kwargs['Group']][kwargs['Stat']])
+    prev_entry = kwargs.get("prev_entry") if "prev_entry" in kwargs.keys() else None
+    if prev_entry:
+        text = "Current category: %s\nEnter category for %s" % (prev_entry, kwargs['Stat'])
+    else:
+        text = "Enter category for %s" % kwargs['Stat']
+    options = [{"key": "_default", "goto": (_set_merit_category,{"Stat": kwargs['Stat'], "Group": kwargs['Group'], "Cost": kwargs['Cost'], "Level": kwargs['Level'], "prev_entry": prev_entry})}]
+    return text, options
+
+def _set_merit_category(caller, raw_string, **kwargs):
+    inp = raw_string.strip()
+
+    prev_entry = kwargs.get("prev_entry")
+
+    if not inp:
+        # a blank input either means OK or Abort
+        if prev_entry:
+            caller.msg("{} accepted.".format(prev_entry))
+            node, args = _buy_merit(caller=caller, raw_string=raw_string, Stat=kwargs['Stat'], CustomCat=prev_entry, Group=kwargs['Group'], Cost=kwargs['Cost'], Level=kwargs['Level'])
+            return node, args
+        else:
+            caller.msg("Aborted.")
+        return "menu_adjust_merit", {'Stat': kwargs['Stat'], 'Group': kwargs['Group']}
+    else:
+        # re-run old node, but pass in the name givens
+        return None, {"prev_entry": inp, 'Stat': kwargs['Stat'], 'Group': kwargs['Group'], 'Cost': kwargs['Cost'], 'Level': kwargs['Level']}
+
+
+def _buy_merit(caller, raw_string, **kwargs):
+    mt = caller.ndb._menutree
+    customcat = kwargs['CustomCat'] if 'CustomCat' in kwargs.keys() else None
+    oldstatcost = 0
+    if customcat:
+        if kwargs['Stat'] in mt.temp_data[kwargs['Group']].keys():
+            if customcat in mt.temp_data[kwargs['Group']][kwargs['Stat']].keys():
+                oldstatcost = mt.temp_data[kwargs['Group']][kwargs['Stat']][customcat]
+            mt.temp_data[kwargs['Group']][kwargs['Stat']][customcat] = kwargs['Level']
+            logger.log_file('%s purchased %s (%s) %s for %s points'% (caller.name, kwargs['Stat'], customcat, kwargs['Level'], kwargs['Cost']))
+        else:
+            mt.temp_data[kwargs['Group']][kwargs['Stat']] = {customcat: kwargs['Level']}
+            logger.log_file('%s purchased %s %s for %s points'% (caller.name, kwargs['Stat'], kwargs['Level'], kwargs['Cost']))
+    else:
+        mt.temp_data[kwargs['Group']][kwargs['Stat']] = kwargs['Level']
+    mt.option_list['Merits']['Points'] -= (kwargs['Cost'] - oldstatcost)
+    return "menu_select_merit", {'Group': kwargs['Group']}
+
+def _sell_merit(caller, raw_string, **kwargs):
+    mt = caller.ndb._menutree
+    customcat = kwargs['CustomCat'] if 'CustomCat' in kwargs.keys() else None
+    if customcat:
+        if customcat in mt.temp_data[kwargs['Group']][kwargs['Stat']].keys():
+            del mt.temp_data[kwargs['Group']][kwargs['Stat']][customcat]
+            if len(mt.temp_data[kwargs['Group']][kwargs['Stat']]) == 0:
+                del mt.temp_data[kwargs['Group']][kwargs['Stat']]
+            logger.log_file('%s sold %s (%s) %s for %s points'% (caller.name, kwargs['Stat'], customcat, kwargs['Level'], kwargs['Cost']))
+
+    else:
+        del mt.temp_data[kwargs['Group']][kwargs['Stat']]
+        logger.log_file('%s sold %s %s for %s points' % (caller.name, kwargs['Stat'], kwargs['Level'], kwargs['Cost']))
+
+    mt.option_list['Merits']['Points'] += kwargs['Cost']
+    return "menu_select_merit", {'Group': kwargs['Group']}
+
+
+def menu_merit_select_cost(caller, raw_string, **kwargs):
+    mt = caller.ndb._menutree
+    merit = helper.parse_merit(mt.race_template[kwargs['Group']][kwargs['Stat']])
+
 def _adjust_stat(caller, raw_string, **kwargs):
     mt = caller.ndb._menutree
     mt.temp_data[kwargs['Group']][kwargs['Stat']] += kwargs['Amount']
     mt.option_list[kwargs['Group']]['Points'] -= kwargs['Cost']
+    pluralcost = ''
+    pluralamount = ''
+    if abs(kwargs['Amount']) > 1:
+        pluralamount = 's'
+    if abs(kwargs['Cost']) > 1:
+        pluralcost = 's'
+    logger.log_file(
+        '%s adjusted %s by %s dot%s for %s point%s' % (caller.name, kwargs['Stat'], kwargs['Amount'], pluralamount, kwargs['Cost'], pluralcost))
+
     return None, {'Stat': kwargs['Stat'], 'Group': kwargs['Group']}
 
 def menu_confirm_accept(caller, raw_string, **kwargs):
