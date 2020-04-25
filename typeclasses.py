@@ -1,6 +1,6 @@
 from evennia import DefaultCharacter, DefaultRoom, DefaultExit, DefaultObject
 from evennia.contrib.ingame_python.typeclasses import EventCharacter, EventRoom, EventExit, EventObject
-from wodsystem import helper
+from wodsystem import helper, CHARGEN_SYSTEMS
 
 class WodEventCharacter(EventCharacter):
     """
@@ -36,6 +36,11 @@ class WodEventCharacter(EventCharacter):
         self.ndb.race = 'Mortal'
         helper.init_object(self)
 
+    def chargenfinished(self, *args, **kwargs):
+        return helper.chargenfinished(self, *args, **kwargs)
+
+    def chargensystems(self):
+        return helper.get_template_options(self, CHARGEN_SYSTEMS)
 
 class WodEventVampire(WodEventCharacter):
     def at_object_creation(self):

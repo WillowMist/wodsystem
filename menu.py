@@ -70,26 +70,28 @@ def menu_chargen(caller):
                                                 )
                     }
                    )
-    skill_points = helper.get_cg_points_spent(caller.db.cg_skills)
-    skill_desc = "Edit Skills (Current points spent: |y%d|n)" % skill_points
-    if skill_points:
-        skill_desc += " (|RNOTE|n: This will reset all your skills.)"
-    options.append({"desc": skill_desc, "goto": ("menu_set_stats", {"template": wodsystem.SKILL_LIST,
-                                                                    "pools": caller.db.cg_creationpools['Skills'],
-                                                                    "current_data": 'cg_skills',
-                                                                    "base_stat": 0}
-                                                        )
-                    }
-                   )
-    merit_points = helper.get_cg_points_spent(caller.db.cg_merits)
-    merit_desc = "Edit Merits (Current points spent: |y%d|n)" % merit_points
-    options.append({"desc": merit_desc, "goto": ("menu_set_merits", {"template": wodsystem.MERIT_LIST,
-                                                                    "pools": caller.db.cg_creationpools['Merits'],
-                                                                    "current_data": 'cg_merits'}
-                                                 )
-                    }
-                   )
-    options.append({"key": ("Exit", "Quit", "q"), "desc": "Exit Chargen", "goto": "menu_exit_chargen"})
+    if caller.chargenfinished(segment='Attributes'):
+        skill_points = helper.get_cg_points_spent(caller.db.cg_skills)
+        skill_desc = "Edit Skills (Current points spent: |y%d|n)" % skill_points
+        if skill_points:
+            skill_desc += " (|RNOTE|n: This will reset all your skills.)"
+        options.append({"desc": skill_desc, "goto": ("menu_set_stats", {"template": wodsystem.SKILL_LIST,
+                                                                        "pools": caller.db.cg_creationpools['Skills'],
+                                                                        "current_data": 'cg_skills',
+                                                                        "base_stat": 0}
+                                                            )
+                        }
+                       )
+    if caller.chargenfinished(segment='Attributes') and caller.chargenfinished(segment='Skills'):
+        merit_points = helper.get_cg_points_spent(caller.db.cg_merits)
+        merit_desc = "Edit Merits (Current points spent: |y%d|n)" % merit_points
+        options.append({"desc": merit_desc, "goto": ("menu_set_merits", {"template": wodsystem.MERIT_LIST,
+                                                                        "pools": caller.db.cg_creationpools['Merits'],
+                                                                        "current_data": 'cg_merits'}
+                                                     )
+                        }
+                       )
+        options.append({"key": ("Exit", "Quit", "q"), "desc": "Exit Chargen", "goto": "menu_exit_chargen"})
     return text, options
 
 def menu_exit_chargen(caller):
@@ -107,7 +109,7 @@ def menu_faction_choose(caller):
         options.append({"key": "None", "desc": "Do not change.", "goto": (_set_info, {"name": "Faction", "info": current_faction})})
     for faction in factions:
         options.append({"key": faction, "desc": "Set to '%s'." % faction, "goto": (_set_info, {"name": "Faction", "info": faction})})
-    if not caller.db.cg_chargenfinished:
+    if not caller.chargenfinished():
         options.append(
             {"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Return to Chargen Main Menu", "goto": "menu_chargen"})
     else:
@@ -129,7 +131,7 @@ def menu_race_choose(caller):
         options.append(
             {"key": race, "desc": "Set to '%s'." % race, "goto": (_set_race, {"name": "Race", "info": race})}
         )
-    if not caller.db.cg_chargenfinished:
+    if not caller.chargenfinished():
         options.append(
             {"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Return to Chargen Main Menu", "goto": "menu_chargen"})
     else:
@@ -169,6 +171,10 @@ def menu_set_merits(caller, raw_string, **kwargs):
             maxpoints = 0
     points_left = maxpoints - helper.get_cg_points_spent(caller.db.cg_merits)
     set_temp(caller, option_list={'Merits': {'Points': points_left, 'MaxPoints': maxpoints}})
+    if points_left:
+        caller.chargenfinished(segment='Merits', value=False)
+    else:
+        caller.chargenfinished(segment='Merits', value=True)
     options = []
     text = ''
     if mt.race_template:
@@ -178,7 +184,7 @@ def menu_set_merits(caller, raw_string, **kwargs):
         for key_dict in mt.headers:
             options.append({"desc": '%s (|y%s points to spend.|n)' % (key_dict, mt.option_list['Merits']['Points']),
                             "goto": ("menu_select_merit", {'Group': key_dict})})
-        if not caller.db.cg_chargenfinished:
+        if not caller.chargenfinished():
             options.append({"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Return to Chargen Main Menu", "goto": "menu_chargen"})
         else:
             options.append({"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Exit the Menu", "goto": "menu_exit_chargen"})
@@ -188,17 +194,8 @@ def menu_set_merits(caller, raw_string, **kwargs):
 def menu_set_stats(caller, raw_string, **kwargs):
     set_temp(caller, **kwargs)
     mt = caller.ndb._menutree
-
-    # template = kwargs['template'] if 'template' in kwargs.keys() else None
-    # race_template = helper.get_template_options(caller, template)
-    # headers = kwargs['template']['Headers'] if 'template' in kwargs.keys() else None
-    # caller.ndb._menutree.template = template
-    # caller.ndb._menutree.race_template = race_template
-    # caller.ndb._menutree.headers = headers
-    # caller.ndb._menutree.base_stat = kwargs['base_stat'] if 'base_stat' in kwargs.keys() else 0
-    # caller.ndb._menutree.current_data = kwargs['current_data']
     options = []
-    # options.append({"key": "Test", "goto": "test_node"})
+    text = ''
     if mt.race_template:
         temp_data = {}
         for key in list(mt.race_template.keys()):
@@ -218,7 +215,7 @@ def menu_set_stats(caller, raw_string, **kwargs):
                 desc += ", " if x < 2 else ""
             options.append({"desc": desc, "goto": ("menu_select_group", {"option_list": option_list})})
             # text += str(p)
-        if not caller.db.cg_chargenfinished:
+        if not caller.chargenfinished():
             options.append({"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Return to Chargen Main Menu", "goto": "menu_chargen"})
         else:
             options.append({"key": ("Exit", "Quit", "q", "Back", "<"), "desc": "Exit the Menu", "goto": "menu_exit_chargen"})
@@ -470,7 +467,9 @@ def menu_accept_stats(caller, raw_string, **kwargs):
         if not mt.temp_data[item]:
             del mt.temp_data[item]
         caller.attributes.add(mt.current_data, mt.temp_data)
-    if not caller.db.cg_chargenfinished:
+        segment = mt.current_data.split('_')[1].capitalize()
+        caller.chargenfinished(segment=segment, value=True)
+    if not caller.chargenfinished():
         evmenu.EvMenu(caller, "wodsystem.menu", startnode="menu_chargen", cmd_on_exit=None)
     else:
         pass

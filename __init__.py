@@ -1,3 +1,7 @@
+CHARGEN_SYSTEMS = {
+    'Default': ['Attributes', 'Skills', 'Merits', 'Virtue', 'Vice']
+}
+
 ATTRIBUTE_LIST = {
     'Headers': ['Physical', 'Social', 'Mental'],
     'Default': {
@@ -81,22 +85,123 @@ MERIT_LIST = {
                                                    'Prereqs': [{'FS: Kung Fu 1 (Focused Attack)': 1}],
                                                    'Effect': "Your character has hardened his body to physical blows, allowing him to withstand repeated hits with minimal effect. He has an effective armor trait of 1 against bashing attacks only."
                                                    },
-                     'FS Kung Fu': {'Cost': 3,
-                                    'Prereqs': [],
+                     'FS Kung Fu 3 (Defensive Attack)': {'Cost': 3,
+                                    'Prereqs': [{'FS: Kung Fu 2 (Iron Skin)': 2}],
                                     'Effect': ""
                                     },
-                     'FS Kung Fu': {'Cost': 3,
-                                    'Prereqs': [],
+                     'FS Kung Fu 4 (Whirlwind Strike)': {'Cost': 4,
+                                    'Prereqs': [{'FS Kung Fu 3 (Defensive Attack)': 3}],
                                     'Effect': ""
                                     },
-                     'FS Kung Fu': {'Cost': 3,
-                                    'Prereqs': [],
+                     'FS Kung Fu 5 (Lethal Strike)': {'Cost': 5,
+                                    'Prereqs': [{'FS Kung Fu 4 (Whirlwind Strike)': 4}],
                                     'Effect': ""
                                     },
+                     'FS Two Weapons 1 (Whirling Blades)': {'Cost': 1,
+                                                            'Prereqs': [{'Dexterity': 3, 'Weaponry': 3}],
+                                                            'Effect': ""},
+                     'FS Two Weapons 2 (Deflect and Thrust)': {'Cost': 2,
+                                        'Prereqs': [{'FS Two Weapons 1 (Whirling Blades)': 1}],
+                                        'Effect': ""
+                                        },
+                     'FS Two Weapons 3 (Focused Attack)': {'Cost': 3,
+                                        'Prereqs': [{'FS Two Weapons 2 (Deflect and Thrust)': 2}],
+                                        'Effect': ""
+                                        },
+                     'FS Two Weapons 4 (Fluid Attack)': {'Cost': 5,
+                                        'Prereqs': [{'FS Two Weapons 3 (Focused Attack)': 3}],
+                                        'Effect': ""
+                                        },
+                     'Fleet of Foot': {'Cost': [1,2,3],
+                                       'Prereqs': [{'Strength': 2}],
+                                       'Effect': ""
+                                       },
+                     'Fresh Start': {'Cost': 1,
+                                     'Prereqs': [{'Fast Reflexes': 2}],
+                                     'Effect': ""
+                                     },
+                     'Giant': {'Cost': 4,
+                               'Effect': ""
+                               },
+                     'Gunslinger': {'Cost': 3,
+                                    'Prereqs': [{'Dexterity': 3, 'Firearms': 3}],
+                                    'Effect': ""
+                                    },
+                     'Iron Stamina': {'Cost': [1,2,3],
+                                      'Prereqs': [{'Stamina': 3}, {'Resolve': 3}],
+                                      'Effect': ""},
+                     'Iron Stomach': {'Cost': 3,
+                                      'Prereqs': [{'Stamina': 2}],
+                                      'Effect': ""
+                                      },
+                     'Natural Immunity': {'Cost': 1,
+                                          'Prereqs': [{'Stamina': 2}],
+                                          'Effect': ""
+                                          },
+                     'Quick Draw': {'Cost': 1,
+                                    'Prereqs': [{'Dexterity': 3}],
+                                    'Effect': "",
+                                    },
+                     'Quick Healer': {'Cost': 4,
+                                      'Prereqs': [{'Stamina': 4}],
+                                      'Effect': ""
+                                      },
+                     'Strong Back': {'Cost': 1,
+                                     'Prereqs': [{'Strength': 2}],
+                                     'Effect': ""
+                                     },
+                     'Strong Lungs': {'Cost': 3,
+                                      'Prereqs': [{'Athletics': 3}],
+                                      'Effect': ""
+                                      },
+                     'Stunt Driver': {'Cost': 3,
+                                      'Prereqs': [{'Dexterity': 3}],
+                                      'Effect': ""
+                                      },
+                     'Toxin Resistance': {'Cost': 2,
+                                          'Prereqs': [{'Stamina': 3}],
+                                          'Effect': ""
+                                          },
+                     'Weaponry Dodge': {'Cost': 1,
+                                        'Prereqs': [{'Strength': 2, 'Weaponry': 1}],
+                                        'Effect': ""
+                                        }
                      },
-        'Social': {'Retainer': {'Cost': [1,2,3,4,5],
+        'Social': {'Allies': {'Cost': [1,2,3,4,5],
+                              'Effect': "",
+                              'Multibuy': True
+                              },
+                   'Barfly': {'Cost': 1,
+                              'Effect': ""
+                              },
+                   'Contacts': {'Cost': [1,2,3,4,5],
+                                'Effect': "",
+                                'Multibuy': True
+                                },
+                   'Fame': {'Cost': [1,2,3],
+                            'Effect': ""
+                            },
+                   'Inspiring': {'Cost': 4,
+                                 'Prereqs': [{'Presence': 4}],
+                                 'Effect': ""
+                                 },
+                   'Mentor': {'Cost': [1,2,3,4,5],
+                              'Effect': ""
+                              },
+                   'Resources': {'Cost': [1,2,3,4,5],
+                                 'Effect': ""
+                                 },
+                   'Retainer': {'Cost': [1,2,3,4,5],
                                 'Effect': '',
-                                'Multibuy': True}
+                                'Multibuy': True
+                                },
+                   'Status': {'Cost': [1,2,3,4,5],
+                              'Effect': "",
+                              'Multibuy': True
+                              },
+                   'Striking Looks': {'Cost': [2,4],
+                                      'Effect': ""
+                                      }
         },
         'Mental': {'Common Sense': {'Cost': 4,
                                     'Effect': "Makes sound, straightforward decisions after a few moments' thought. Staff can make a reflexive Wits + Composure roll once per chapter for a PC with the merit if it is about to embark on a disastrous course of action, or if the PC finds itself at a point in the story where the PC is completely stumped for ideas. If the roll succeeds, Staff may point out the risks of a particular course, or suggest possible actions that the PC can take that might get events back on track. Note: A PC is free to ask Staff for a Common Sense roll when out of ideas, however, remember it's an aid, not a crutch and it should not be over used.",
@@ -105,7 +210,7 @@ MERIT_LIST = {
                    'Danger Sense': {'Cost': 2,
                                     'Effect': "A sixth sense that staff may use to warn of danger. +2 modifier on reflexive Wits + Composure rolls to detect an impending ambush."
                                     },
-                   'Eiditic Memory': {'Cost': 2,
+                   'Eidetic Memory': {'Cost': 2,
                                       'Effect': "With a near-photographic memory, this merit able to recall vast amounts of observed detail with astonishing accuracy. Make no roll to remember an obscure fact or past experience, unless under stress then there is a +2 modifier on any Intelligence + Composure or other Skill-based roll (say, Academics, to remember a fact) for memory recall.",
                                       'Availability': 'chargen'
                                       },
@@ -132,19 +237,6 @@ MERIT_LIST = {
                    }
         }
     },
-    'Old': {
-        'Physical': {'Ambidextrous': 3, 'Brawling Dodge': 1, 'Direction Sense': 1, 'Disarm': 2, 'Fast Reflexes': [1,2],
-                     'Fighting Finesse': 2, 'Fighting Style: Boxing': [1,2,3,4,5], 'Fighting Style: Kung Fu': [1,2,3,4,5],
-                     'Fighting Style: Two Weapons': [1,2,3,4,5], 'Fleet of Foot': [1,2,3], 'Fresh Start': 1, 'Giant': 4,
-                     'Gunslinger': 3, 'Iron Stamina': [1,2,3], 'Iron Stomach': 2, 'Natural Immunity': 1, 'Quick Draw': 1,
-                     'Quick Healer': 4, 'Strong Back': 1, 'Strong Lungs': 3, 'Stunt Driver': 3, 'Toxin Resistance': 2,
-                     'Weaponry Dodge': 1},
-        'Social': {'Allies': [1,2,3,4,5], 'Barfly': 1, 'Contacts': [1,2,3,4,5], 'Fame': [1,2,3], 'Inspiring': 4,
-                   'Mentor': [1,2,3,4,5], 'Resources': [1,2,3,4,5], 'Retainer': [1,2,3,4,5], 'Status': [1,2,3,4,5],
-                   'Striking Looks': [2,3,4]},
-        'Mental': {'Common Sense': 4, 'Danger Sense': 2, 'Eidetic Memory': 2, 'Encyclopedic Knowledge': 4,
-                   'Holistic Awareness': 3, 'Language': [1,2,3], 'Meditative Mine': 1, 'Unseen Sense': 3}
-    }
 }
 
 FACTIONS_LIST = {
@@ -152,3 +244,4 @@ FACTIONS_LIST = {
 }
 
 SEARCHABLE_SECTIONS = ['cg_attributes', 'cg_skills', 'cg_advantages', 'cg_merits', 'cg_flaws']
+

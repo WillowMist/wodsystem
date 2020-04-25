@@ -24,7 +24,7 @@ def init_object(obj):
     if not obj.attributes.has('cg_pools') or not len(obj.db.cg_pools) or reset: obj.db.cg_pools = {}
     if not obj.attributes.has('cg_advantages') or not len(obj.db.cg_advantages) or reset: obj.db.cg_advantages = {}
     if not obj.attributes.has('cg_creationpools') or not len(obj.db.cg_creationpools) or reset: obj.db.cg_creationpools = {'Attributes': (5, 4, 3), 'Skills': (11, 7, 4), 'Specialties': 3, 'Merits': 7}
-    if not obj.attributes.has('cg_chargenfinished') or reset: obj.db.cg_chargenfinished = False
+    if not obj.attributes.has('cg_chargenfinished') or reset: chargenfinished(obj, value=False)
 
 
 def wod_header(title=None, align="l", linecolor="W", textcolor="w", accentcolor="w"):
@@ -35,6 +35,7 @@ def wod_header(title=None, align="l", linecolor="W", textcolor="w", accentcolor=
     :param align: "l", "c", or "r" alignment.  Only used if title is provided.
     :param linecolor: Single character color code, default is 'W' (Light grey)
     :param textcolor: Single character color code, default is 'w' (White)
+    :param accentcolor: Single character color code, default is 'w' (White)
     '''
     if title:
         fulltitle = "|%s===|%s|||%s %s |%s|||%s===" % (linecolor, accentcolor, textcolor, title, accentcolor, linecolor)
@@ -49,6 +50,38 @@ def wod_header(title=None, align="l", linecolor="W", textcolor="w", accentcolor=
         line = '|%s%s|n' % (linecolor, pad('', width=78, fillchar='='))
     return line
 
+
+def chargenfinished(obj, segment=None, **kwargs):
+    if not obj.attributes.has('cg_chargenfinished'):
+        obj.db.cg_chargenfinished = {}
+        chargenfinished(obj, value=False)
+    setvalue = False
+    if 'value' in kwargs.keys():
+        setvalue = True
+        newvalue = kwargs['value']
+    if segment:
+        if setvalue:
+            obj.db.cg_chargenfinished[segment] = newvalue
+            return
+        else:
+            if segment in obj.db.cg_chargenfinished.keys():
+                return obj.db.cg_chargenfinished[segment]
+            else:
+                return False
+    else:
+        if setvalue:
+            obj.db.cg_chargenfinished = {}
+            for key in get_template_options(obj,wodsystem.CHARGEN_SYSTEMS):
+                obj.db.cg_chargenfinished[key]  = newvalue
+        else:
+            finished = True
+            if len(obj.db.cg_chargenfinished):
+                for key in obj.db.cg_chargenfinished.keys():
+                    if not obj.db.cg_chargenfinished[key]:
+                        finished = False
+            else:
+                return False
+            return finished
 
 def get_base_stats(obj, template, base_stat=0):
     racetemplate = get_template_options(obj, template)
@@ -280,7 +313,7 @@ def save_bg(caller, buffer):
 
 def quit_bg(caller):
     caller.msg("Exiting Background Editor")
-    if not caller.db.cg_chargenfinished:
+    if not caller.chargenfinished():
         evmenu.EvMenu(caller, "wodsystem.menu", startnode="menu_chargen", cmd_on_exit=None)
 
 
