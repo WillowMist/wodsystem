@@ -1,5 +1,5 @@
 from evennia import DefaultCharacter, DefaultRoom, DefaultExit, DefaultObject
-from evennia.contrib.ingame_python.typeclasses import EventCharacter, EventRoom, EventExit, EventObject
+from evennia.contrib.base_systems.ingame_python.typeclasses import EventCharacter, EventRoom, EventExit, EventObject
 from wodsystem import helper, CHARGEN_SYSTEMS
 
 class WodEventCharacter(EventCharacter):

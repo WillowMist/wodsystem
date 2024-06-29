@@ -245,3 +245,6 @@ FACTIONS_LIST = {
 
 SEARCHABLE_SECTIONS = ['cg_attributes', 'cg_skills', 'cg_advantages', 'cg_merits', 'cg_flaws']
 
+PACKAGES = {
+    'Default': []
+}

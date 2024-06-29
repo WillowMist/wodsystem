@@ -1,5 +1,5 @@
 
-from evennia.commands.default.system import CmdObjects
+from evennia.commands.default.building import CmdObjects
 from evennia import default_cmds, Command
 from evennia.commands.default.muxcommand import MuxCommand
 from evennia.utils import evmenu

@@ -4,7 +4,7 @@ from evennia.utils import evtable, pad, fill, eveditor, evmenu
 from evennia.utils.utils import justify
 from evennia.utils.ansi import strip_ansi, ANSIString
 from time import sleep
-from evennia.contrib.dice import roll_dice
+from evennia.contrib.rpg.dice import roll_dice
 
 def init_object(obj):
     size = obj.ndb.size if obj.nattributes.has('size') else 5
