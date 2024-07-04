@@ -227,16 +227,17 @@ def get_cg_data(template, headers, data, useheaders=True, highlight_column=None,
         if datatype=='merits':
             for group in headers:
                 tempcolumn = []
-                for dataentry in sorted(data[group].keys()):
-                    purchasedmerit = data[group][dataentry]
-                    if str(purchasedmerit).isdigit():
-                        statline = '%-20.20s %s' % (dataentry, purchasedmerit)
-                        tempcolumn.append(statline)
-                    else:
-                        for entry in list(purchasedmerit.keys()):
-                            meritname = '%s (%s)' % (dataentry, entry)
-                            statline = '%-20.20s %s' % (meritname, purchasedmerit[entry])
+                if group in data.keys():
+                    for dataentry in sorted(data[group].keys()):
+                        purchasedmerit = data[group][dataentry]
+                        if str(purchasedmerit).isdigit():
+                            statline = '%-20.20s %s' % (dataentry, purchasedmerit)
                             tempcolumn.append(statline)
+                        else:
+                            for entry in list(purchasedmerit.keys()):
+                                meritname = '%s (%s)' % (dataentry, entry)
+                                statline = '%-20.20s %s' % (meritname, purchasedmerit[entry])
+                                tempcolumn.append(statline)
                 maxcontent = max(len(tempcolumn), maxcontent)
                 columns.append(tempcolumn)
         else:
